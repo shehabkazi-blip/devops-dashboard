@@ -1,35 +1,53 @@
-# Drop this file into each MERN project you want the dashboard to be able to
-# deploy. The `workflow_dispatch` trigger is what lets the dashboard's backend
-# call the GitHub Actions API to start a run on demand.
-name: Deploy
+name: CI/CD Pipeline to AWS
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
+  workflow_dispatch: # এটি ম্যানুয়ালি রান করার অপশন দিবে
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
+      # ১. কোড চেকআউট করা
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      # ২. Node.js এনভায়রনমেন্ট সেটআপ করা
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
+      # ৩. প্যাকেজ ইনস্টলেশন
+      - name: Install Dependencies
         run: npm ci
 
-      - name: Run tests
+      # ৪. টেস্টিং (ব্রেক-পয়েন্ট: টেস্ট ফেইল করলে ডিপ্লয় হবে না)
+      - name: Run Tests
         run: npm test --if-present
 
-      - name: Build
+      # ৫. বিল্ড প্রসেস
+      - name: Build Application
         run: npm run build --if-present
 
-      # Replace this with your actual deploy step, e.g.:
-      # - Render/Railway/Fly.io deploy hook (curl the deploy hook URL)
-      # - AWS/GCP/Azure deploy action
-      # - Docker build + push to a registry
-      - name: Deploy
-        run: echo "Add your deploy command here (e.g. curl your Render/Railway deploy hook)"
+      # ৬. AWS সার্ভারে ডিপ্লয়মেন্ট (SSH-এর মাধ্যমে)
+      - name: Deploy to AWS EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Starting deployment on server..."
+            cd ~/devops-dashboard
+            
+            # সার্ভারে নতুন কোড আপডেট করা
+            git pull origin main
+            
+            # কন্টেইনারগুলো রিস্টার্ট করা
+            docker-compose down
+            docker-compose up -d --build
+            
+            echo "Deployment completed successfully!"
