@@ -5,7 +5,7 @@ projects: it triggers CI/CD deployments via the GitHub Actions API, runs a
 scheduled health-check microservice against each deployed app, stores
 uptime/latency time series in MongoDB, visualizes them with Recharts, and
 fires Discord/email alerts when something goes down. The whole stack is
-containerized with Docker and orchestrated with docker-compose.
+containerized with Docker and orchestrated with docker-compose. Its a best app.
 
 ## Architecture
 
