@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22 # নতুন আপডেট অনুযায়ী ২০ এর বদলে ২২ ব্যবহার করুন
+          node-version: 22
 
       - name: Install Backend Dependencies
         working-directory: ./backend
@@ -36,15 +36,26 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "Starting deployment..."
+            
+            # সার্ভারে ফোল্ডার না থাকলে তৈরি করবে এবং সেখানে যাবে
+            mkdir -p ~/devops-dashboard
             cd ~/devops-dashboard
             
-            # নতুন কোড পুল করা
-            git pull origin main
+            # গিট রিপোজিটরি ইনিশিয়ালাইজ করা না থাকলে ক্লোন করবে
+            if [ ! -d ".git" ]; then
+              echo "Initializing repository..."
+              git init
+              git remote add origin https://github.com/${{ github.repository }}.git
+            fi
             
-            # .env ফাইল তৈরি বা আপডেট করা
+            # কোড পুল করা
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # .env ফাইল আপডেট করা
             echo "${{ secrets.ENV_FILE_CONTENT }}" > ./backend/.env
             
-            # কন্টেইনারগুলো আপডেট করা
+            # কন্টেইনার আপডেট করা
             docker-compose down
             docker-compose up -d --build
             
