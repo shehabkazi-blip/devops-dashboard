@@ -34,29 +34,35 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 15m
           script: |
             echo "Starting deployment..."
             
-            # সার্ভারে ফোল্ডার না থাকলে তৈরি করবে এবং সেখানে যাবে
             mkdir -p ~/devops-dashboard
             cd ~/devops-dashboard
             
-            # গিট রিপোজিটরি ইনিশিয়ালাইজ করা না থাকলে ক্লোন করবে
             if [ ! -d ".git" ]; then
-              echo "Initializing repository..."
               git init
               git remote add origin https://github.com/${{ github.repository }}.git
             fi
             
-            # কোড পুল করা
             git fetch origin main
             git reset --hard origin/main
             
-            # .env ফাইল আপডেট করা
             echo "${{ secrets.ENV_FILE_CONTENT }}" > ./backend/.env
             
-            # কন্টেইনার আপডেট করা
+            # সার্ভারের র‍্যাম বাঁচাতে বিল্ড প্রসেস আলাদা করা হয়েছে
             docker compose down
-            docker compose up -d --build
+            
+            echo "Building Backend..."
+            docker compose build backend
+            docker compose up -d backend
+            
+            # ব্যাকএন্ড স্টার্ট হওয়ার জন্য সময় দেওয়া হচ্ছে
+            sleep 10
+            
+            echo "Building Frontend..."
+            docker compose build frontend
+            docker compose up -d frontend
             
             echo "Deployment completed successfully!"
