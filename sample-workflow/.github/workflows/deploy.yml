@@ -1,0 +1,35 @@
+# Drop this file into each MERN project you want the dashboard to be able to
+# deploy. The `workflow_dispatch` trigger is what lets the dashboard's backend
+# call the GitHub Actions API to start a run on demand.
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test --if-present
+
+      - name: Build
+        run: npm run build --if-present
+
+      # Replace this with your actual deploy step, e.g.:
+      # - Render/Railway/Fly.io deploy hook (curl the deploy hook URL)
+      # - AWS/GCP/Azure deploy action
+      # - Docker build + push to a registry
+      - name: Deploy
+        run: echo "Add your deploy command here (e.g. curl your Render/Railway deploy hook)"

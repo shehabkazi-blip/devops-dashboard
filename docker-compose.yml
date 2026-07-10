@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: dashboard-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: dashboard-backend
+    restart: unless-stopped
+    ports:
+      - '5000:5000'
+    env_file:
+      - ./backend/.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/devops_dashboard
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:5000/api
+    container_name: dashboard-frontend
+    restart: unless-stopped
+    ports:
+      - '3000:80'
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:
