@@ -3,6 +3,11 @@ const HealthCheck = require('../models/HealthCheck');
 
 const router = express.Router();
 
+// মনিটরিং টুল বা হার্টবিট চেক করার জন্য নতুন এন্ডপয়েন্ট
+router.get('/', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // GET /api/health/:repoId?limit=100 - latency/uptime time series for charts
 router.get('/:repoId', async (req, res) => {
   try {
